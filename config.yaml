@@ -1,0 +1,8 @@
+input:
+  monitored: Monitor.txt
+output:
+  brokenFolderStructure: broken.txt
+  flacDupes: dupesflac.m3u
+  missingSongs: missingSongs.m3u
+  mp3Dupes: dupesmp3.m3u
+  playlistFolder: playlists
