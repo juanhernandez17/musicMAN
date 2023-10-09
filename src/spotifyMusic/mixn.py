@@ -19,12 +19,8 @@ class SpotifyMixn():
 		print('created Spotify',end='\r')
 		SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 		SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-		self.sp = SpotifyAPI(clientid=SPOTIFY_CLIENT_ID,
-							 secret=SPOTIFY_CLIENT_SECRET)
+		self.sp = SpotifyAPI(clientid=SPOTIFY_CLIENT_ID, secret=SPOTIFY_CLIENT_SECRET,ratelimit=self.settings.spotifyratelimitDate)
 		self.dbsp = SpotifyDatabase(db)
-		self.settings |= {  # default settings
-			'spotifyplaylistFolder': 'output/spotifyplaylists',
-		}
 	def getSpotifyPlaylists(self, plids: list = None, likes: bool = True, usercreated=False):
 		me = self.sp.spotify.me()
 		if plids:
@@ -156,9 +152,15 @@ class SpotifyMixn():
 			(self.settings.spotifyplaylistFolder / f"{playlist['id']}.m3u").write_text('\n'.join(buff),encoding='utf-8')
 			pass
 
-	def updateSpotifyPlaylist(self):
+	def updateSpotifyPlaylists(self):
 		for playlist in tqdm(self.dbsp.get_Playlists({}), desc='Playlists',**self.logger.tqdm):
 			for track in playlist['tracks']:
 				if track['isrc']:
-					track['isrc'] = track['isrc'].upper()
+					track['isrc'] = track['isrc'].upper().replace('-','').replace('_','')
 			self.dbsp.update_Playlist({'snapshot_id':playlist['snapshot_id']},{'$set':playlist})
+   
+	def updateSpotifySongs(self):
+		for track in tqdm(self.dbsp.get_Songs({}), desc='Songs',**self.logger.tqdm):
+			if track['isrc']:
+				track['isrc'] = track['isrc'].upper().replace('-','').replace('_','')
+			self.dbsp.update_Song({'id':track['id']},{'$set':track})

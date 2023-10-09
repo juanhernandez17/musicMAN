@@ -11,12 +11,6 @@ class LocalMixn():
 	def __init__(self,db):
 		super().__init__()
 		print('created Local',end='\r')
-		self.settings |= { # default settings
-			'flacDupesFile': 'output/dupesflac.m3u',
-			'mp3DupesFile': 'output/dupesmp3.m3u',
-			'brokenFolderStructFile': 'output/broken.txt',
-
-		}
 		self.dblc = LocalDatabase(db)
 
 	def getfiles(self, folders:list):

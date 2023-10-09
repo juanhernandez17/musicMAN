@@ -1,5 +1,6 @@
 import json, hashlib
 import atexit
+from typing import Any
 from src.spotifyMusic.mixn import SpotifyMixn
 from src.deezerMusic.mixn import DeezerMixn
 from src.monitor.mixn import MonitorMixn
@@ -13,14 +14,38 @@ import yaml
 # from plex.plexserver import plexServ
 from time import sleep
 # from tqdm import tqdm
+from src.config.utils import parse_date
 load_dotenv()
 
 
 
 
 class _Config:
-	def __init__(self,defaults:dict,configFile:Path):
-		self.load_config(defaults,configFile)
+	defaults = {
+		'logFile':"output/output.log",
+		'playlistFolder': 'output/playlists',
+		'missingSongsFile': 'output/missingSongs.m3u',
+		'failedDLsFile':'output/failedDL.txt',
+		'downloadedSongsFile':'output/Downloaded.txt',
+		'monitoredFile':'input/Monitor.txt',
+		'arlListFile':'input/arl.txt',
+		'workingARLsFile':'input/ARLworking.txt',
+		'flacDupesFile': 'output/dupesflac.m3u',
+		'mp3DupesFile': 'output/dupesmp3.m3u',
+		'brokenFolderStructFile': 'output/broken.txt',
+		'spotifyplaylistFolder': 'output/spotifyplaylists',
+		'spotifyratelimitDate':None
+	}
+	settings = {}
+	def __init__(self,configFile:Path):
+		self.load_config(configFile)
+
+	def __setattr__(self, name: str, value: Any) -> None:
+		try:
+			self.settings[name] = value
+		except KeyError:
+			return getattr(self.args, name)
+		pass
 
 	def __getattr__(self, name):
 		try:
@@ -28,13 +53,12 @@ class _Config:
 		except KeyError:
 			return getattr(self.args, name)
 	# turn strings to Path types
-	def load_config(self,config,configFile):
+	def load_config(self,configFile):
 		print('Loading config',end='\r')
-		self.settings = {}
 		if configFile.exists():
-			tmp = yaml.load(configFile.read_text(),yaml.Loader)
-			config['input'] |= tmp['input']
-			config['output'] |= tmp['output']
+			config = yaml.load(configFile.read_text(),yaml.Loader)
+		else: 
+			config = self.defaults
 		self.from_dict(config)
 
 	def from_dict(self,data):
@@ -44,6 +68,8 @@ class _Config:
 				self.settings[x].mkdir(parents=True,exist_ok=True)
 			elif x.endswith('File'):
 				self.settings[x] = Path(y)
+			elif x.endswith('Date'):
+				self.settings[x] = parse_date(y)
 			else:
 				self.settings[x] = y
 				
@@ -92,13 +118,11 @@ class musicMAN(SpotifyMixn,DeezerMixn,MonitorMixn,LocalMixn):
 		client = MongoClient(os.getenv('MONGO'))
 		db = client.musicMAN_db
 		self.settingsFile = Path('config.yaml')
-		self.settings = {
-			'logFile':"output/output.log"
-		}
-		super().__init__(db)
-		self.settings = _Config(self.settings,self.settingsFile)
+		self.settings = {		}
+		self.settings = _Config(self.settingsFile)
 		self.logger = Logger(self.settings.logFile)
 		atexit.register(self.saveSettings)
+		super().__init__(db)
 		pass
 
 	def md5_string(self, stringlist):
@@ -109,5 +133,6 @@ class musicMAN(SpotifyMixn,DeezerMixn,MonitorMixn,LocalMixn):
 
 	def saveSettings(self):
 		print('Saving config',end='\r')
+		self.settings.spotifyratelimitDate = self.sp.ratelimit
 		tmp = self.settings.to_dict()
 		yaml.dump(tmp,self.settingsFile.open('w',encoding='utf-8'))
