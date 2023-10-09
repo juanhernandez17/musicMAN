@@ -22,7 +22,9 @@ class SpotifyMixn():
 		self.sp = SpotifyAPI(clientid=SPOTIFY_CLIENT_ID,
 							 secret=SPOTIFY_CLIENT_SECRET)
 		self.dbsp = SpotifyDatabase(db)
-
+		self.settings |= {  # default settings
+			'spotifyplaylistFolder': 'output/spotifyplaylists',
+		}
 	def getSpotifyPlaylists(self, plids: list = None, likes: bool = True, usercreated=False):
 		me = self.sp.spotify.me()
 		if plids:
@@ -145,13 +147,13 @@ class SpotifyMixn():
 			else:
 				songs.append(self.dbsp.get_PlaylistLocalSongs({'snapshot_id':playlist["snapshot_id"]}))
 			buff = [f"#EXTM3U \n#PLAYLIST: {playlist['title']}"]
-			self.settings.playlistFolder
+			self.settings.spotifyplaylistFolder
 			# newlist = sorted(chain(*songs), key=lambda d: d['added_at'])
 			for song in chain(*songs):
 				buff.append(f'#EXTINF:{song["id"]},isrc="{song["isrc"]}" added="{song["added_at"]}",{song["title"]}')
 				buff.append('\n'.join([x['path'] for x in song["local"]]))
 				pass
-			(self.settings.playlistFolder / f"{playlist['id']}.m3u").write_text('\n'.join(buff),encoding='utf-8')
+			(self.settings.spotifyplaylistFolder / f"{playlist['id']}.m3u").write_text('\n'.join(buff),encoding='utf-8')
 			pass
 
 	def updateSpotifyPlaylist(self):

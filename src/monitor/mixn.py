@@ -17,16 +17,20 @@ class MonitorMixn():
 	def __init__(self,db):
 		super().__init__(db)
 		print('created Monitor',end='\r')
-		self.settings['output'] |= {  # default settings
-			'playlistFolder': 'playlists',
-			'missingSongs': 'missingSongs.m3u',
+		self.settings |= {  # default settings
+			'playlistFolder': 'output/playlists',
+			'missingSongsFile': 'output/missingSongs.m3u',
+			'failedDLsFile':'output/failedDL.txt',
+			'downloadedSongsFile':'output/Downloaded.txt'
 		}
-		self.settings['input'] |= {
-			'monitored':'Monitor.txt'
+		self.settings |= {
+			'monitoredFile':'input/Monitor.txt',
+			'arlListFile':'input/arl.txt',
+			'workingARLsFile':'input/ARLworking.txt'
 		}
 		self.dbmn = MonitorDatabase(db)
 		if DLR:
-			self.dmx = DLR(arl=os.getenv('DEEZERARLDL'))
+			self.dmx = DLR(arl=os.getenv('DEEZERARLDL'),failedFile=self.settings.failedDLsFile,successFile=self.settings.downloadedSongsFile,workingarls=self.settings.workingARLsFile)
    
 	def urlToCollection(self, url):
 		info = {}
@@ -197,19 +201,19 @@ class MonitorMixn():
 				missingbuff += missing
     
 		if len(missingbuff):
-			self.settings.missingSongs.write_text(
+			self.settings.missingSongsFile.write_text(
 				'\n'.join(missingbuff), encoding='utf-8')
 				
 		pass
 
 	def readCollectionTxt(self):
-		for x in tqdm(self.settings.monitored.open('r').readlines(), desc='Monitor.txt',**self.logger.tqdm):
+		for x in tqdm(self.settings.monitoredFile.open('r').readlines(), desc='Monitor.txt',**self.logger.tqdm):
 			if x[0] == '#':
 				continue
 			self.addCollection(x)
 
 	def dl_missing_tracks(self, gets=True, delfile=False):
-		missinglist = self.settings.missingSongs.read_text('utf-8').splitlines()
+		missinglist = self.settings.missingSongsFile.read_text('utf-8').splitlines()
 		missing = {}
 		for x in missinglist:
 			if x[0] == '#':

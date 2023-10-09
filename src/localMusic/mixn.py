@@ -11,11 +11,10 @@ class LocalMixn():
 	def __init__(self,db):
 		super().__init__()
 		print('created Local',end='\r')
-		self.settings['output'] |= { # default settings
-			'flacDupes': 'dupesflac.m3u',
-			'mp3Dupes': 'dupesmp3.m3u',
-			'brokenFolderStructure': 'broken.txt',
-			'deemixDLocation':'E:/Deemix/Artists'
+		self.settings |= { # default settings
+			'flacDupesFile': 'output/dupesflac.m3u',
+			'mp3DupesFile': 'output/dupesmp3.m3u',
+			'brokenFolderStructFile': 'output/broken.txt',
 
 		}
 		self.dblc = LocalDatabase(db)
@@ -222,7 +221,7 @@ class LocalMixn():
 			if not os.path.exists(folder):
 				continue
 			generators.append(os.walk(folder))
-		broken = self.settings.brokenFolderStructure.open('w',encoding='utf-8')
+		broken = self.settings.brokenFolderStructFile.open('w',encoding='utf-8')
 		for cwd, folders, files in tqdm(chain(*generators),desc='Scanning Organization',**self.logger.tqdm):
 			cw = Path(cwd)
 			nms = [x.lower() for x in folders]

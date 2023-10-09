@@ -37,19 +37,16 @@ class _Config:
 			config['output'] |= tmp['output']
 		self.from_dict(config)
 
-	def from_dict(self,data,parent=None):
+	def from_dict(self,data):
 		for x, y in data.items():
-			if isinstance(y,dict):
-				if parent:
-					xpath = parent / x
-				else:
-					xpath = Path(x)
-				self.from_dict(y,xpath)
-				xpath.mkdir(parents=True,exist_ok=True)
+			if x.endswith('Folder'):
+				self.settings[x] = Path(y)
+				self.settings[x].mkdir(parents=True,exist_ok=True)
+			elif x.endswith('File'):
+				self.settings[x] = Path(y)
 			else:
-				self.settings[x] = parent / y
-				if x.endswith('Folder'):
-					self.settings[x].mkdir(parents=True,exist_ok=True)
+				self.settings[x] = y
+				
 
 	# turns a Path object into a nested dict
 	def to_dict(self,data=None):
@@ -96,10 +93,7 @@ class musicMAN(SpotifyMixn,DeezerMixn,MonitorMixn,LocalMixn):
 		db = client.musicMAN_db
 		self.settingsFile = Path('config.yaml')
 		self.settings = {
-			'input':{},
-			'output':{
-				'logFile':"output.log"
-	   		},
+			'logFile':"output/output.log"
 		}
 		super().__init__(db)
 		self.settings = _Config(self.settings,self.settingsFile)
