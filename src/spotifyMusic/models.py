@@ -32,10 +32,17 @@ class Song(SpotifyInfo,DatabaseInfo):
 	duration_ms: int = Field(default=None)
 	explicit: bool
 	isrc: Optional[str] = Field(default=None,alias=AliasPath('external_ids', 'isrc'))
-	title: str = Field(default=None)
+	title: str = Field(default=None,alias='name')
 	track_number: int = Field(default=None)
-
- 
+	@validator("isrc", pre=True)
+	def parse_isrc(cls, value:str):
+		if value is None: return None
+		return value.upper().replace('-','').replace('_','')
+   
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
+  
 class Track(BaseModel):
 	added_at:datetime
 	added_by:User
@@ -45,6 +52,10 @@ class Track(BaseModel):
 	@validator("added_at", pre=True)
 	def parse_added_at(cls, value):
 		return parse_date(value)
+	@validator("isrc", pre=True)
+	def parse_isrc(cls, value:str):
+		if value is None: return None
+		return value.upper().replace('-','').replace('_','')
 
 class Playlist(SpotifyInfo,DatabaseInfo):
 	title:str= Field(alias=AliasPath('name'))
@@ -57,4 +68,7 @@ class Playlist(SpotifyInfo,DatabaseInfo):
 	total_tracks: int = Field(alias=AliasPath('tracks','total'))
 	daddy:Optional[str] = Field(default=None)
 	child:Optional[str] = Field(default=None)
-	
+   
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True

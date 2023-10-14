@@ -1,5 +1,5 @@
 from pydantic import  Field, AliasPath, validator, BaseModel,AliasChoices
-from typing import List
+from typing import List,Optional
 from datetime import datetime
 from src.config.models import DatabaseInfo
 from src.config.utils import parse_date
@@ -15,7 +15,7 @@ class Artist(DeezerMixn):
 	name:str
 	main:bool = Field(alias=AliasPath('role'))
 	@validator("main", pre=True)
-	def parse_release_date(cls, value):
+	def parse_main(cls, value):
 		return value == "Main"
 
 class Album(DeezerMixn):
@@ -28,7 +28,16 @@ class Track(BaseModel):
 	title: str
 	@validator("added_at", pre=True)
 	def parse_added_at(cls, value):
-		return datetime.fromtimestamp(value)
+		if isinstance(value,int):
+			return datetime.fromtimestamp(value)
+		return value
+	@validator("isrc", pre=True)
+	def parse_isrc(cls, value:str):
+		if value is None: return None
+		return value.upper().replace('-','').replace('_','')
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
 
 class Song(DeezerMixn,DatabaseInfo): # Detailed Track
 	
@@ -47,10 +56,17 @@ class Song(DeezerMixn,DatabaseInfo): # Detailed Track
 	@validator("release_date", pre=True)
 	def parse_release_date(cls, value):
 		return parse_date(value)
-
+	@validator("isrc", pre=True)
+	def parse_isrc(cls, value:str):
+		if value is None: return None
+		return value.upper().replace('-','').replace('_','')
+   
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
 class Playlist(DeezerMixn,DatabaseInfo):
 	title:str
-	description:str = Field(default=None)
+	description:Optional[str] = Field(default='')
 	duration:int
 	public:bool
 	collaborative:bool
@@ -63,4 +79,9 @@ class Playlist(DeezerMixn,DatabaseInfo):
 	tracks:List[Track]
 	@validator("creation_date","update_date", pre=True)
 	def parse_date(cls, value):
-		return datetime.fromtimestamp(value)
+		if isinstance(value,int):
+			return datetime.fromtimestamp(value)
+		return value
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True

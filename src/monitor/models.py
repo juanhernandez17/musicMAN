@@ -20,3 +20,7 @@ class Monitor(BaseModel):
 	def set_next_check(self):
 		if self.last_checked and self.refresh_interval:
 			self.next_check = self.last_checked + timedelta(seconds=self.refresh_interval)
+   
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
