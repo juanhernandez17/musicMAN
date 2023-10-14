@@ -9,6 +9,7 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from pathlib import Path
 from pymongo.mongo_client import MongoClient
+from datetime import datetime
 import os
 import yaml
 # from plex.plexserver import plexServ
@@ -34,7 +35,7 @@ class _Config:
 		'mp3DupesFile': 'output/dupesmp3.m3u',
 		'brokenFolderStructFile': 'output/broken.txt',
 		'spotifyplaylistFolder': 'output/spotifyplaylists',
-		'spotifyratelimitDate':None
+		'spotifyratelimitDate':datetime.utcnow()
 	}
 	settings = {}
 	def __init__(self,configFile:Path):
@@ -79,19 +80,10 @@ class _Config:
 		if data is None: data=self.settings
 		jsondata = {}
 		for k,v in data.items():
-			parts= [x for x in v.parts if x != '']
-			for part in parts: 
-				if part == parts[0]:
-					if part not in jsondata:
-						jsondata[part] = {}
-					tmp = jsondata[part]
-				elif part == parts[-1]:
-					tmp[k] = part
-					pass
-				else:
-					tmp[part] = {}
-					tmp = tmp[part]
-					pass
+			if k.endswith('Date'):
+				jsondata[k] = v.strftime('%Y-%m-%d %H:%M:%S')
+			else:
+				jsondata[k] = str(v)
 		return jsondata
 
 class Logger():

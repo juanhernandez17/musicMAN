@@ -17,20 +17,9 @@ class MonitorMixn():
 	def __init__(self,db):
 		super().__init__(db)
 		print('created Monitor',end='\r')
-		self.settings |= {  # default settings
-			'playlistFolder': 'output/playlists',
-			'missingSongsFile': 'output/missingSongs.m3u',
-			'failedDLsFile':'output/failedDL.txt',
-			'downloadedSongsFile':'output/Downloaded.txt'
-		}
-		self.settings |= {
-			'monitoredFile':'input/Monitor.txt',
-			'arlListFile':'input/arl.txt',
-			'workingARLsFile':'input/ARLworking.txt'
-		}
 		self.dbmn = MonitorDatabase(db)
 		if DLR:
-			self.dmx = DLR(arl=os.getenv('DEEZERARLDL'),failedFile=self.settings.failedDLsFile,successFile=self.settings.downloadedSongsFile,workingarls=self.settings.workingARLsFile)
+			self.dmx = DLR(arl=os.getenv('DEEZERARLDL'),failedFile=self.settings.failedDLsFile,successFile=self.settings.downloadedSongsFile,workingarls=self.settings.workingARLsFile,verbose=False)
    
 	def urlToCollection(self, url):
 		info = {}
@@ -145,7 +134,6 @@ class MonitorMixn():
 		for coll in tqdm(collections, desc='Collection',**self.logger.tqdm):
 			coll = self.dbmn.validate_Monitor(coll)
 			threads = []
-			tqdm.write(f'Getting {coll.name} Songs')
 			if coll.monitor_type == 'artist':
 				if coll.deezerid and deezer:
 					threads.append(

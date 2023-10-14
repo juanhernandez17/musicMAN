@@ -1,8 +1,13 @@
-input:
-  monitored: Monitor.txt
-output:
-  brokenFolderStructure: broken.txt
-  flacDupes: dupesflac.m3u
-  missingSongs: missingSongs.m3u
-  mp3Dupes: dupesmp3.m3u
-  playlistFolder: playlists
+arlListFile: input\arl.txt
+brokenFolderStructFile: output\broken.txt
+downloadedSongsFile: output\Downloaded.txt
+failedDLsFile: output\failedDL.txt
+flacDupesFile: output\dupesflac.m3u
+logFile: output\output.log
+missingSongsFile: output\missingSongs.m3u
+monitoredFile: input\Monitor.txt
+mp3DupesFile: output\dupesmp3.m3u
+playlistFolder: output\playlists
+spotifyplaylistFolder: output\spotifyplaylists
+spotifyratelimitDate: '1969-12-31 18:00:00'
+workingARLsFile: input\ARLworking.txt
