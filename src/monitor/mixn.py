@@ -1,5 +1,5 @@
 import re, json, os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from tqdm import tqdm
 from threading import Thread
@@ -63,7 +63,7 @@ class MonitorMixn():
 						args=(spinfo.get('id'),))
 		return th, info
 
-	def addCollection(self, url=None, info: dict = None):
+	def addCollection(self, url=None, info: dict = None, scan:bool = False):
 		threads = []
 		info = {}
 		if url is not None:
@@ -116,11 +116,12 @@ class MonitorMixn():
 					tqdm.write(f'Getting {information.title} Songs')
 					threads.append(
 						Thread(target=self.getDeezerPlaylist, args=(deezerid,)))
-		for t in threads:
-			t.start()
-		for t in threads:
-			t.join()
-		info['last_checked'] = datetime.utcnow()
+		if scan:
+			for t in threads:
+				t.start()
+			for t in threads:
+				t.join()
+			info['last_checked'] = datetime.utcnow()
 		if info.get('name'):
 			self.dbmn.add_Monitor(info)
 		pass
@@ -130,9 +131,10 @@ class MonitorMixn():
 		if force:
 			collections = list(self.dbmn.get_Monitors({}))
 		else:
-			collections = list(self.dbmn.get_Monitors({'next_check':{'$lt':datetime.utcnow()}}))
+			collections = list(self.dbmn.get_Monitors( {"$or":[{'next_check':{'$lt':datetime.now(UTC)}},{'next_check':None}]} ))
 		for coll in tqdm(collections, desc='Collection',**self.logger.tqdm):
 			coll = self.dbmn.validate_Monitor(coll)
+			tqdm.write(coll.name)
 			threads = []
 			if coll.monitor_type == 'artist':
 				if coll.deezerid and deezer:
