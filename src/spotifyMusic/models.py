@@ -12,6 +12,9 @@ class SpotifyInfo(BaseModel):
 class User(SpotifyInfo):
 	name: Optional[str] = Field(default=None,alias=AliasPath('display_name'))
 
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
 class Artist(SpotifyInfo):
 	name: str = Field(default=None)
 
@@ -56,6 +59,9 @@ class Track(BaseModel):
 	def parse_isrc(cls, value:str):
 		if value is None: return None
 		return value.upper().replace('-','').replace('_','')
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
 
 class Playlist(SpotifyInfo,DatabaseInfo):
 	title:str= Field(alias=AliasPath('name'))
@@ -64,7 +70,7 @@ class Playlist(SpotifyInfo,DatabaseInfo):
 	owner: User
 	public: bool = Field(default=None)
 	snapshot_id: str = Field(default=None)
-	tracks: List[Track] = Field(alias=AliasPath('tracks','items'))
+	tracks: List[Track] = Field([],alias=AliasPath('tracks','items'))
 	total_tracks: int = Field(alias=AliasPath('tracks','total'))
 	daddy:Optional[str] = Field(default=None)
 	child:Optional[str] = Field(default=None)

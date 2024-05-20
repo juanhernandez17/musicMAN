@@ -7,7 +7,7 @@ from time import time
 from datetime import datetime
 import json
 from itertools import chain
-from src.spotifyMusic.methods import SpotifyDatabase
+from src.spotifyMusic.methods import SpotifyDatabase, Song
 from src.config.utils import parse_date
 load_dotenv()
 
@@ -81,7 +81,8 @@ class SpotifyMixn():
 			if 'items' not in playlist['tracks'] or len(playlist['tracks']['items']) != playlist['tracks']['total']:
 				tracks = self.sp.getPlaylistTracks(playlist['id'])
 				playlist['tracks']['items'] = tracks
-			self.addMissingSpotifySongs([x['track'] for x in playlist['tracks']['items'] if x['track']])
+			if playlist['tracks']['items']:
+				self.addMissingSpotifySongs([x['track'] for x in playlist['tracks']['items'] if x['track']])
 			res = self.dbsp.add_Playlist(playlist)
 			if daddy and res is not None:
 				self.dbsp.update_Playlist({'snapshot_id':daddy['snapshot_id']},{'$set':{'child':playlist['snapshot_id']}})
@@ -105,7 +106,7 @@ class SpotifyMixn():
 			if len(dbalbum) != alb['total_tracks']:
 				tracks = self.sp.getAlbumTracks(alb['id'])
 				self.addMissingSpotifySongs(tracks,dbalbum)
-				tqdm.write(f'[NEW ALBUM] [{alb["id"]}] {alb["name"]}')
+				tqdm.write(f'[NEW SPOTIFY ALBUM] [{alb["id"]}] {alb["name"]}')
 		pass
 
 	def addMissingSpotifySongs(self,songidlist:list,existing=None):
@@ -146,6 +147,7 @@ class SpotifyMixn():
 			self.settings.spotifyplaylistFolder
 			# newlist = sorted(chain(*songs), key=lambda d: d['added_at'])
 			for song in chain(*songs):
+				if song['isrc'] is None: continue
 				buff.append(f'#EXTINF:{song["id"]},isrc="{song["isrc"]}" added="{song["added_at"]}",{song["title"]}')
 				buff.append('\n'.join([x['path'] for x in song["local"]]))
 				pass
@@ -153,14 +155,23 @@ class SpotifyMixn():
 			pass
 
 	def updateSpotifyPlaylists(self):
-		for playlist in tqdm(self.dbsp.get_Playlists({}), desc='Playlists',**self.logger.tqdm):
+		for playlist in tqdm(self.dbsp.get_Playlists({"tracks.isrc":{'$regex':'[a-z\-]'}}), desc='Playlists',**self.logger.tqdm):
 			for track in playlist['tracks']:
 				if track['isrc']:
 					track['isrc'] = track['isrc'].upper().replace('-','').replace('_','')
 			self.dbsp.update_Playlist({'snapshot_id':playlist['snapshot_id']},{'$set':playlist})
    
 	def updateSpotifySongs(self):
-		for track in tqdm(self.dbsp.get_Songs({}), desc='Songs',**self.logger.tqdm):
+		for track in tqdm(self.dbsp.get_Songs({'isrc':{'$regex':'[a-z\-]'}}), desc='Songs',**self.logger.tqdm):
 			if track['isrc']:
 				track['isrc'] = track['isrc'].upper().replace('-','').replace('_','')
 			self.dbsp.update_Song({'id':track['id']},{'$set':track})
+   
+   
+	def updateSpotifys(self):
+		tracks = [x['id'] for x in self.dbsp.get_Songs({'title':None})]
+		tracks = self.sp.getTracks(tracks)
+		for track in tqdm(self.dbsp.get_Songs({'title':None}), desc='Songs',**self.logger.tqdm):
+			song = tracks[track['id']]
+			valid = Song(**song).model_dump()
+			self.dbsp.update_Song({'id':track['id']},{'$set':valid})
