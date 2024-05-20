@@ -11,6 +11,7 @@ class Song(BaseModel):
 	bitrate:int
 	md5:str
 	file_size:int
+	update_time:Optional[float]
 	album:Optional[str] = Field(default=None)
 	language:Optional[str] = Field(default=None)
 	artists:Optional[List[str]]

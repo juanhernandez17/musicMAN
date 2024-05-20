@@ -20,10 +20,10 @@ class LocalDatabase():
 		return data
 
 	@handle_exceptions
-	def update_Song(self,songid,data):
+	def update_Song(self,songpath,data):
 		data = self.validate_SongUpdate(data)
 		if data:
-			self.songs.update_one({'path':songid},{'$set':data})
+			self.songs.update_one({'path':songpath},{'$set':data})
    
 	def update_Songs(self,filter,data):
 		data = self.validate_SongUpdate(data)
@@ -51,7 +51,7 @@ class LocalDatabase():
 
 	def get_Songs(self,q,params=None):
 		if params is None: params = {}
-		return self.songs.find(q,params)
+		return self.songs.find(q,params,no_cursor_timeout=True)
 
 # Exists
 	def exists_Songs(self,songl:list,params:dict):

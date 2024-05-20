@@ -39,25 +39,15 @@ class LocalMixn():
 			songs = []
 
 	def updatefiles(self,folders:list):
-
-		songs = []
-		for folder in folders:
-			songs += self.db.lc_getAllSongs(folder)
-		frm = LocalFile()
-		newfiles = []
-		for s in tqdm(songs,'Updating Local Songs',**self.logger.tqdm):
-			md5h = frm.md5_file(s.path)
-			if md5h.lower() != s.md5.lower():
-				newfiles.append(s.path)
-				self.db.session.delete(s)
-			if len(newfiles) % 100 == 99:
-				self.db.session.commit()
-				self.addNewFiles(newfiles)
-				newfiles = []
-		if len(newfiles):
-			self.db.session.commit()
-			self.addNewFiles(newfiles)
-		pass
+		songs = [self.dblc.get_Songs({'path':{'$regex':folder}}) for folder in folders]
+		for s in tqdm(chain(*songs),'Updating Local Songs',**self.logger.tqdm):
+			if not Path(s['path']).exists():
+				self.dblc.delete_Song({'path':s['path']})
+				continue
+			if 'update_time' not in s or Path(s['path']).stat().st_mtime != s['update_time']:
+				formatedinfo = LocalFile(s['path']).formatfileinfo()
+				if formatedinfo and formatedinfo['md5'].upper() != s['md5'].upper():	
+					self.dblc.update_Song(formatedinfo['path'],formatedinfo)
 
 	def assignPathToArtist(self):
 

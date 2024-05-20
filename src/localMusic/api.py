@@ -139,6 +139,7 @@ class LocalFile():
 
 		try:
 			sz = self.fileobj.stat().st_size
+			update = self.fileobj.stat().st_mtime
 			bitrate = int(self.metadata.info.bitrate / 1000)
 			length = int(self.metadata.info.length)
 			hashnum = self.md5_file()
@@ -162,7 +163,8 @@ class LocalFile():
 			"title": title,
 			"isrc": isrc,
 			"md5": hashnum,
-			"file_size":sz
+			"file_size":sz,
+			"update_time":update
 		}
   
 	def newcheckfilefor(self, attr, upper=False, integer=False, index=0):
