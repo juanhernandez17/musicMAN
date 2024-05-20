@@ -18,6 +18,9 @@ class Artist(DeezerMixn):
 	def parse_main(cls, value):
 		return value == "Main"
 
+	class Config:
+		populate_by_name = True
+		arbitrary_types_allowed = True
 class Album(DeezerMixn):
 	title:str
 
@@ -76,7 +79,7 @@ class Playlist(DeezerMixn,DatabaseInfo):
 	creator:User
 	update_date:datetime = Field(default=datetime.fromtimestamp(0),alias=AliasPath('time_mod'))
 
-	tracks:List[Track]
+	tracks:List[Track] = Field([])
 	@validator("creation_date","update_date", pre=True)
 	def parse_date(cls, value):
 		if isinstance(value,int):

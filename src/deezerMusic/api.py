@@ -103,9 +103,7 @@ class DeezerAPI():
 		return res
   
 	@retry_404
-	def getFeat(self,artist_id):
-		limit = 50
-		index = 0
+	def getFeat(self,artist_id,index=0,limit=50):
 		releases = []
 		while True:
 			response = self.gw.api_call('album.getDiscography', {

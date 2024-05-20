@@ -23,6 +23,7 @@ class DeezerMixn():
 
 	def getDeezerDiscography(self,artist_id):
 		artist = self.dz.getArtist(artist_id)
+		if artist is None: return None
 		albums = self.dz.getDiscography(artist.name) # deezer api only lets us search by artist name not by artist id
 		if albums is None: return None
 		spotids = [x for x in albums]
@@ -35,18 +36,18 @@ class DeezerMixn():
 			tracks = []
 			existing = {x['id']:x['_id'] for x in self.dbdz.get_Album(dzid,{'id':1})}
 			if album.artist.id == artist.id: # if its an official album
-				tracks = [(x).as_dict() for x in album.get_tracks()]
+				tracks = [(x).as_dict()['id'] for x in album.get_tracks()]
 			else: # if artists is featured or wrong artist[sometimes fakeprofiles are made]
 				for track in self.dz.getAlbumTracks(album):
 					artists = track.contributors
 					if len(artists) > 1:
 						for cont in artists:
 							if artist.id == cont.id:
-								tracks.append(track.as_dict())
+								tracks.append(track.as_dict()['id'])
 								break
 			if len(tracks):
 				self.addMissingDeezerSongs(tracks,existing)
-				tqdm.write(f'[NEW ALBUM] [{album.name}]')
+				tqdm.write(f'[NEW DEEZER ALBUM] [{album.title}]')
 
 	def getDeezerPlaylist(self,playlist):
 		if isinstance(playlist,int):
@@ -95,13 +96,13 @@ class DeezerMixn():
 		playlist['checksum'] = self.md5_string(hs)
 		playlist['tracks'] = tracks
 		playlist['nb_tracks'] = len(tracks)
-		self.addMissingDeezerSongs([x for x in tracks])
+		self.addMissingDeezerSongs([x['id'] for x in tracks])
 		self.dbdz.add_Playlist(playlist)
 
 	def addMissingDeezerSongs(self,songidlist:list,existing=None):
 		if existing is None:
 			existing = {x['id']:x['_id'] for x in self.dbdz.exists_Songs(songidlist,{'id':1})}
-		missing = [x['id'] for x in songidlist if x['id'] not in existing]
+		missing = [x for x in songidlist if x not in existing]
 		creating = []
 		for x in tqdm(missing,'Deezer Songs',**self.logger.tqdm):
 			song = self.dz.getTrack(x)
@@ -146,4 +147,10 @@ class DeezerMixn():
 			elif x['monitor_type'] == 'playlist':
 				songids += [y['id'] for y in x['tracks']]
 		
-		return 
+		return
+
+	def updateDeezerSongsisrc(self):
+		for track in tqdm(self.dbdz.get_Songs({'isrc':{'$regex':'[a-z\-]'}}), desc='Songs',**self.logger.tqdm):
+			if track['isrc']:
+				track['isrc'] = track['isrc'].upper().replace('-','').replace('_','')
+			self.dbdz.update_Song({'id':track['id']},{'$set':track})
