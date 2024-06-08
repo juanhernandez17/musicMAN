@@ -293,5 +293,12 @@ class LocalMAN():
 				except Exception as e:
 					print(f"Couldnt move {fl} to {newname}")
 		pass
-
 	
+	def findBadNesting(self, folders:list):
+		generators = []
+		ends = (".mp3", '.flac', '.m4a', '.wav')
+		generators = [os.walk(folder) for folder in folders]
+		for cwd, folders, files in tqdm(chain(*generators),desc='Scanning',**self.logger.tqdm):
+			pat = Path(cwd)
+			if pat.name in folders:
+				tqdm.write(pat.absolute().as_posix())
