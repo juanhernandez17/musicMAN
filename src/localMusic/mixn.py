@@ -112,20 +112,23 @@ class LocalMAN():
 
 	def getDuplicates(self):
 
-		dupes = self.db.lc_getDupes()
-		flacDupes = self.settings.flacDupes.open('w',encoding='utf-8')
-		mp3Dupes = self.settings.mp3Dupes.open('w',encoding='utf-8')
+		dupes = [x for x in self.db.get_Duplicates()]
+		# flacDupes = self.settings.flacDupesFile
+		flacDupes = self.settings.flacDupesFile.open('w',encoding='utf-8')
+		# mp3Dupes = self.settings.mp3DupesFile
+		mp3Dupes = self.settings.mp3DupesFile.open('w',encoding='utf-8')
 		flacDupes.write(f'#EXTM3U \n')
 		mp3Dupes.write(f'#EXTM3U \n')
   
-		for isrc, songs in dupes.items():
-			if any([x for x in songs if x.path.endswith('flac')]):
+		for item in tqdm(dupes,"DUPES",**self.logger.tqdm):
+			if any([x for x in item['songs'] if x.endswith('flac')]):
 				ot = flacDupes
 			else:
 				ot = mp3Dupes
-			for song in songs:
-				ot.write(f'#EXTINF:1,{isrc},{song.name}\n')
-				ot.write(f'{song.path}\n')
+			for song in item['songs']:
+				song = Path(song)
+				ot.write(f'#EXTINF:1,{item["isrc"]},{song.name}\n')
+				ot.write(f'{song.absolute().as_posix()}\n')
 	   
 		pass
 
@@ -269,3 +272,12 @@ class LocalMAN():
 	def findTracksWithNoPlaylist(self):
 		tracks = self.db
 		pass
+
+
+	def clearVariousArtists(self, variousFolder):
+		ends = [".mp3", '.flac', '.m4a', '.wav']
+		variousFolder = Path(variousFolder)
+		generators = [variousFolder.rglob(f'*{ending}') for ending in ends]
+    
+		for fl in chain(*generators):
+			print(fl)

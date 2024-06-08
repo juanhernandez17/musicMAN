@@ -61,4 +61,15 @@ class LocalDatabase():
 
 	def delete_Song(self,q,params=None):
 		if params is None: params = {}
-		return self.songs.find_one(q,params)
+		return self.songs.delete_one(q,params)
+
+
+# AGG
+
+	def get_Duplicates(self):
+		return self.songs.aggregate([
+			{"$group" : { "_id": "$isrc", "count": { "$sum": 1 }, "songs": { "$push":  "$path"}} },
+			{"$match": {"_id" :{ "$ne" : None } , "count" : {"$gt": 1} } },
+			{"$sort": {"count" : -1} },
+			{"$project": {"isrc" : "$_id", "_id" : 0, "songs":"$songs"} }
+		])
