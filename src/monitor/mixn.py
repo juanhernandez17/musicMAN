@@ -59,7 +59,7 @@ class MonitorMixn():
 		if spinfo and spinfo.get('name').lower() == name.lower():
 			info['spotifyid'] = spinfo.get('id')
 			info['spotifyuri'] = spinfo.get('uri')
-			th = Thread(target=self.getSpotifyDiscography,
+			th = Thread(target=self.spotify.getDiscography,
 						args=(spinfo.get('id'),))
 		return th, info
 
@@ -78,7 +78,7 @@ class MonitorMixn():
 					info['name'] = information.get('name')
 					tqdm.write(f'Getting {information.get("name")} Songs')
 					threads.append(
-						Thread(target=self.getSpotifyDiscography, args=(spotifyid,)))
+						Thread(target=self.spotify.getDiscography, args=(spotifyid,)))
 					th, dzid = self.findSpotifyArtistInDeezer(
 						information.get('name'))
 					if th:
@@ -96,7 +96,7 @@ class MonitorMixn():
 					info['name'] = information.get('name')
 					tqdm.write(f'Getting {information.get("name")} Songs')
 					threads.append(
-						Thread(target=self.getSpotifyPlaylist, args=(spotifyid,)))
+						Thread(target=self.spotify.getPlaylist, args=(spotifyid,)))
 			case {'deezerid': deezerid, 'monitor_type': tp} if tp == 'artist':
 				information = self.dz.api.get_artist(deezerid)
 				if information:
@@ -142,14 +142,14 @@ class MonitorMixn():
 						Thread(target=self.getDeezerDiscography, args=(coll.deezerid,)))
 				if coll.spotifyid and spotify:
 					threads.append(
-						Thread(target=self.getSpotifyDiscography, args=(coll.spotifyid,)))
+						Thread(target=self.spotify.getDiscography, args=(coll.spotifyid,)))
 			elif coll.monitor_type == 'playlist':
 				if coll.deezerid and deezer:
 					threads.append(
 						Thread(target=self.getDeezerPlaylist, args=(coll.deezerid,)))
 				if coll.spotifyid and spotify:
 					threads.append(
-						Thread(target=self.getSpotifyPlaylist, args=(coll.spotifyid,)))
+						Thread(target=self.spotify.getPlaylist, args=(coll.spotifyid,)))
 			for t in threads:
 				t.start()
 			for t in threads:  # commented out because running two threads can lead to database being locked by one and not allowing the other to continue
@@ -177,9 +177,9 @@ class MonitorMixn():
 					songs += list(self.dbdz.get_PlaylistLocalSongs({'id':x['deezerid']},qualitybit))
 			if x['spotifyid']:
 				if x['monitor_type'] == 'artist':
-					songs += list(self.dbsp.get_ArtistLocalSongs(x['spotifyid'],qualitybit))
+					songs += list(self.spotify.db.get_ArtistLocalSongs(x['spotifyid'],qualitybit))
 				elif x['monitor_type'] == 'playlist':
-					songs += list(self.dbsp.get_PlaylistLocalSongs({'uri':x['spotifyuri']},qualitybit))
+					songs += list(self.spotify.db.get_PlaylistLocalSongs({'uri':x['spotifyuri']},qualitybit))
 
 			missing = [f'# {x["name"]}']
 			for song in tqdm(songs,**self.logger.tqdm):

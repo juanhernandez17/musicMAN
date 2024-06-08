@@ -1,7 +1,7 @@
 import json, hashlib
 import atexit
 from typing import Any
-from src.spotifyMusic.mixn import SpotifyMixn
+from src.spotifyMusic.mixn import SpotifyMAN
 from src.deezerMusic.mixn import DeezerMixn
 from src.monitor.mixn import MonitorMixn
 from src.localMusic.mixn import LocalMixn
@@ -104,7 +104,7 @@ class Logger():
 		self.outputfile.write(outputstring)
 		pass
 
-class musicMAN(SpotifyMixn,DeezerMixn,MonitorMixn,LocalMixn):
+class musicMAN(DeezerMixn,MonitorMixn,LocalMixn):
 	def __init__(self):
 
 		client = MongoClient(os.getenv('MONGO'))
@@ -115,6 +115,8 @@ class musicMAN(SpotifyMixn,DeezerMixn,MonitorMixn,LocalMixn):
 		self.logger = Logger(self.settings.logFile)
 		atexit.register(self.saveSettings)
 		super().__init__(db)
+
+		self.spotify = SpotifyMAN(db,self.settings, self.logger)
 		pass
 
 	def md5_string(self, stringlist):
@@ -125,6 +127,6 @@ class musicMAN(SpotifyMixn,DeezerMixn,MonitorMixn,LocalMixn):
 
 	def saveSettings(self):
 		print('Saving config',end='\r')
-		self.settings.spotifyratelimitDate = self.sp.ratelimit
+		self.settings.spotifyratelimitDate = self.spotify.sp.ratelimit
 		tmp = self.settings.to_dict()
 		yaml.dump(tmp,self.settingsFile.open('w',encoding='utf-8'))

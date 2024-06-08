@@ -1,5 +1,6 @@
 from datetime import datetime
 from time import time
+import hashlib
 
 def parse_date(value):
 	formats = [
@@ -30,4 +31,11 @@ def timer_func(func):
         t2 = time() 
         print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s') 
         return result 
-    return wrap_func 
+    return wrap_func
+
+
+def md5_string(stringlist):
+	hash_md5 = hashlib.md5()
+	for chunk in stringlist:
+		hash_md5.update(chunk.encode('utf-8'))
+	return hash_md5.hexdigest().upper()
