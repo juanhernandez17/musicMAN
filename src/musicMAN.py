@@ -5,6 +5,7 @@ from src.spotifyMusic.mixn import SpotifyMAN
 from src.deezerMusic.mixn import DeezerMAN
 from src.monitor.mixn import MonitorMixn
 from src.localMusic.mixn import LocalMAN
+from src.plex.plex import PlexMAN
 from tqdm import tqdm
 from dotenv import load_dotenv
 from pathlib import Path
@@ -117,6 +118,7 @@ class musicMAN(MonitorMixn):
 		self.spotify = SpotifyMAN(db,self.settings, self.logger)
 		self.deezer = DeezerMAN(db,self.settings, self.logger)
 		self.local = LocalMAN(db,self.settings,self.logger)
+		self.plex = PlexMAN(self.settings,self.logger)
 		pass
 
 	def md5_string(self, stringlist):
