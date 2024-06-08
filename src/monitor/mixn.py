@@ -50,7 +50,7 @@ class MonitorMixn():
 		dzinfo = self.dz.api.search_artists(name)[0]
 		if dzinfo and dzinfo.name.lower() == name.lower():
 			dzid = dzinfo.id
-			th = Thread(target=self.getDeezerDiscography, args=(dzinfo.id,))
+			th = Thread(target=self.deezer.getDiscography, args=(dzinfo.id,))
 		return th, dzid
 
 	def findDeezerArtistInSpotify(self, name):
@@ -103,7 +103,7 @@ class MonitorMixn():
 					info['name'] = information.name
 					tqdm.write(f'Getting {information.name} Songs')
 					threads.append(
-						Thread(target=self.getDeezerDiscography, args=(deezerid,)))
+						Thread(target=self.deezer.getDiscography, args=(deezerid,)))
 					th, spinfo = self.findDeezerArtistInSpotify(
 						information.name)
 					if th:
@@ -115,7 +115,7 @@ class MonitorMixn():
 					info['name'] = information.title
 					tqdm.write(f'Getting {information.title} Songs')
 					threads.append(
-						Thread(target=self.getDeezerPlaylist, args=(deezerid,)))
+						Thread(target=self.deezer.getPlaylist, args=(deezerid,)))
 		if scan:
 			for t in threads:
 				t.start()
@@ -139,14 +139,14 @@ class MonitorMixn():
 			if coll.monitor_type == 'artist':
 				if coll.deezerid and deezer:
 					threads.append(
-						Thread(target=self.getDeezerDiscography, args=(coll.deezerid,)))
+						Thread(target=self.deezer.getDiscography, args=(coll.deezerid,)))
 				if coll.spotifyid and spotify:
 					threads.append(
 						Thread(target=self.spotify.getDiscography, args=(coll.spotifyid,)))
 			elif coll.monitor_type == 'playlist':
 				if coll.deezerid and deezer:
 					threads.append(
-						Thread(target=self.getDeezerPlaylist, args=(coll.deezerid,)))
+						Thread(target=self.deezer.getPlaylist, args=(coll.deezerid,)))
 				if coll.spotifyid and spotify:
 					threads.append(
 						Thread(target=self.spotify.getPlaylist, args=(coll.spotifyid,)))
@@ -172,9 +172,9 @@ class MonitorMixn():
 			songs = []
 			if x['deezerid']:
 				if x['monitor_type'] == 'artist':
-					songs += list(self.dbdz.get_ArtistLocalSongs(x['deezerid'],qualitybit))
+					songs += list(self.deezer.db.get_ArtistLocalSongs(x['deezerid'],qualitybit))
 				elif x['monitor_type'] == 'playlist':
-					songs += list(self.dbdz.get_PlaylistLocalSongs({'id':x['deezerid']},qualitybit))
+					songs += list(self.deezer.db.get_PlaylistLocalSongs({'id':x['deezerid']},qualitybit))
 			if x['spotifyid']:
 				if x['monitor_type'] == 'artist':
 					songs += list(self.spotify.db.get_ArtistLocalSongs(x['spotifyid'],qualitybit))
