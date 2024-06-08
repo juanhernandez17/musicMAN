@@ -278,6 +278,15 @@ class LocalMAN():
 		ends = [".mp3", '.flac', '.m4a', '.wav']
 		variousFolder = Path(variousFolder)
 		generators = [variousFolder.rglob(f'*{ending}') for ending in ends]
-    
+		outputFolder = variousFolder.parent / 'output'
 		for fl in chain(*generators):
-			print(fl)
+			flinfo = LocalFile(fl.absolute().as_posix())
+			if flinfo.makeSingle(): # if the metadata is changed move into new location
+				try:
+					newname = outputFolder / f"{flinfo.checkfilefor('artist')}/Singles/{flinfo.checkfilefor('date')} - {flinfo.checkfilefor('album')}/{int(flinfo.checkfilefor('tracknumber')):02d} - {flinfo.checkfilefor('title')}.{flinfo.filetype}"
+					if newname.exists(): raise
+					newname.parent.mkdir(parents=True,exist_ok=True)
+					shutil.move(fl,newname)
+				except Exception as e:
+					print(f"Couldnt move {fl} to {newname}")
+		pass

@@ -3,7 +3,8 @@ from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen import File
 from pathlib import Path
-from mutagen.id3 import TPE2
+from mutagen.id3 import ID3, TPE2, TPOS, TRCK,TALB,APIC,PictureType
+from mutagen.flac import Picture
 class LocalFile():
 	def __init__(self,filename=None):
 		super(LocalFile,self).__init__()
@@ -197,3 +198,29 @@ class LocalFile():
 			print(f'ERROR getting {attr}')
 			print("ERROR", sys.exc_info()[0], "occurred.")
 			return None
+
+	# change the tags to make it look like a single release
+		# useful when getting rid of tracks with "Various Artist"
+	def makeSingle(self):
+		title = self.checkfilefor('title')
+		artist = self.checkfilefor('artist')
+		if title == '' or artist == '': return False
+		# make track = 1
+		# make album = title
+		# make albumartist = artist[0]
+		# clear the album cover
+		if self.filetype == 'flac':
+			self.metadata["tracknumber"] = "1"
+			self.metadata['album'] = title
+			self.metadata['albumartist'] = artist
+			self.metadata.clear_pictures()
+		elif self.filetype == 'mp3':
+			self.metadata[self.nametoMP3['tracknumber']] = TRCK(encoding=3, text=u"1")
+			self.metadata[self.nametoMP3['album']] = TALB(encoding=3, text=str(title))
+			self.metadata[self.nametoMP3['albumartist']] = TPE2(encoding=3, text=str(artist))
+			self.metadata[self.nametoMP3['discnumber']] = TPOS(encoding=3, text=u"1")
+			self.metadata.tags.delall("APIC")
+		# save
+		print(self.checkfilefor('albumartist'))
+		self.save()
+		return True
