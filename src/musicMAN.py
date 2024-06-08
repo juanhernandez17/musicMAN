@@ -2,9 +2,9 @@ import json, hashlib
 import atexit
 from typing import Any
 from src.spotifyMusic.mixn import SpotifyMAN
-from src.deezerMusic.mixn import DeezerMixn
+from src.deezerMusic.mixn import DeezerMAN
 from src.monitor.mixn import MonitorMixn
-from src.localMusic.mixn import LocalMixn
+from src.localMusic.mixn import LocalMAN
 from tqdm import tqdm
 from dotenv import load_dotenv
 from pathlib import Path
@@ -17,8 +17,6 @@ from time import sleep
 # from tqdm import tqdm
 from src.config.utils import parse_date
 load_dotenv()
-
-
 
 
 class _Config:
@@ -104,7 +102,7 @@ class Logger():
 		self.outputfile.write(outputstring)
 		pass
 
-class musicMAN(DeezerMixn,MonitorMixn,LocalMixn):
+class musicMAN(MonitorMixn):
 	def __init__(self):
 
 		client = MongoClient(os.getenv('MONGO'))
@@ -117,6 +115,8 @@ class musicMAN(DeezerMixn,MonitorMixn,LocalMixn):
 		super().__init__(db)
 
 		self.spotify = SpotifyMAN(db,self.settings, self.logger)
+		self.deezer = DeezerMAN(db,self.settings, self.logger)
+		self.local = LocalMAN(db,self.settings,self.logger)
 		pass
 
 	def md5_string(self, stringlist):

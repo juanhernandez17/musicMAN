@@ -7,11 +7,12 @@ from src.localMusic.methods import LocalDatabase
 import shutil
 import os, re
 
-class LocalMixn():
-	def __init__(self,db):
-		super().__init__()
+class LocalMAN():
+	def __init__(self,db, settings, logger):
+		self.settings = settings
+		self.logger = logger
+		self.db = LocalDatabase(db)
 		print('created Local',end='\r')
-		self.dblc = LocalDatabase(db)
 
 	def getfiles(self, folders:list):
 
@@ -19,7 +20,7 @@ class LocalMixn():
 		ends = (".mp3", '.flac', '.m4a', '.wav')
 		generators = [os.walk(folder) for folder in folders]
 		songs = []
-		exists = [x['path'] for x in self.dblc.get_Songs({},{'path':1})]
+		exists = [x['path'] for x in self.db.get_Songs({},{'path':1})]
 		for cwd, folders, files in tqdm(chain(*generators),desc='Scanning',**self.logger.tqdm):
 			for p in files:
 				if p.endswith(ends):
@@ -31,23 +32,23 @@ class LocalMixn():
 						songs.append(formatedfileinfo)
 						tqdm.write(f'QUEUED: {formatedfileinfo["title"]} - {fullpath}')
 					if len(songs) == 1000:
-						self.dblc.add_Songs(songs)	
+						self.db.add_Songs(songs)	
 						songs = []
 
 		if len(songs):
-			self.dblc.add_Songs(songs)
+			self.db.add_Songs(songs)
 			songs = []
 
 	def updatefiles(self,folders:list):
-		songs = [self.dblc.get_Songs({'path':{'$regex':folder}}) for folder in folders]
+		songs = [self.db.get_Songs({'path':{'$regex':folder}}) for folder in folders]
 		for s in tqdm(chain(*songs),'Updating Local Songs',**self.logger.tqdm):
 			if not Path(s['path']).exists():
-				self.dblc.delete_Song({'path':s['path']})
+				self.db.delete_Song({'path':s['path']})
 				continue
 			if 'update_time' not in s or Path(s['path']).stat().st_mtime != s['update_time']:
 				formatedinfo = LocalFile(s['path']).formatfileinfo()
 				if formatedinfo and formatedinfo['md5'].upper() != s['md5'].upper():	
-					self.dblc.update_Song(formatedinfo['path'],formatedinfo)
+					self.db.update_Song(formatedinfo['path'],formatedinfo)
 
 	def assignPathToArtist(self):
 
@@ -102,11 +103,11 @@ class LocalMixn():
 		 
 	def refreshLoc(self):
 
-		songs = self.dblc.get_Songs({})
+		songs = self.db.get_Songs({})
 		for song in tqdm(songs,desc='LocalRefresh',**self.logger.tqdm):
 			if song['path'] is None or not Path(song['path']).exists():
 				tqdm.write(f'DELETED: {song["title"]} - {song["path"]}')
-				self.dblc.delete_Song({'path':song['path']})
+				self.db.delete_Song({'path':song['path']})
 
 
 	def getDuplicates(self):

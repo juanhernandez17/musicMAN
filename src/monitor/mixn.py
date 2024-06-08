@@ -15,7 +15,7 @@ except ImportError:
 class MonitorMixn():
 
 	def __init__(self,db):
-		super().__init__(db)
+		super().__init__()
 		print('created Monitor',end='\r')
 		self.dbmn = MonitorDatabase(db)
 		if DLR:
