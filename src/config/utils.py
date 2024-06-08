@@ -1,6 +1,7 @@
 from datetime import datetime
 from time import time
-import hashlib
+import hashlib, re
+from unicodedata import normalize
 
 def parse_date(value):
 	formats = [
@@ -39,3 +40,9 @@ def md5_string(stringlist):
 	for chunk in stringlist:
 		hash_md5.update(chunk.encode('utf-8'))
 	return hash_md5.hexdigest().upper()
+
+def fixFileName(txt, char='_'):
+    txt = str(txt)
+    txt = re.sub(r'[\0\/\\:*?"<>|]', char, txt)
+    txt = normalize("NFC", txt)
+    return txt

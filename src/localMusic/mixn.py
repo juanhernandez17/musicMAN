@@ -4,6 +4,7 @@ from itertools import chain
 from send2trash import send2trash
 from src.localMusic.api import LocalFile
 from src.localMusic.methods import LocalDatabase
+from src.config.utils import fixFileName
 import shutil
 import os, re
 
@@ -283,10 +284,14 @@ class LocalMAN():
 			flinfo = LocalFile(fl.absolute().as_posix())
 			if flinfo.makeSingle(): # if the metadata is changed move into new location
 				try:
-					newname = outputFolder / f"{flinfo.checkfilefor('artist')}/Singles/{flinfo.checkfilefor('date')} - {flinfo.checkfilefor('album')}/{int(flinfo.checkfilefor('tracknumber')):02d} - {flinfo.checkfilefor('title')}.{flinfo.filetype}"
+					newname = outputFolder / f"{fixFileName(flinfo.checkfilefor('artist'))}/Singles/{flinfo.checkfilefor('date')} - {fixFileName(flinfo.checkfilefor('album'))}/{int(flinfo.checkfilefor('tracknumber')):02d} - {fixFileName(flinfo.checkfilefor('title'))}.{flinfo.filetype}"
 					if newname.exists(): raise
 					newname.parent.mkdir(parents=True,exist_ok=True)
 					shutil.move(fl,newname)
+					if fl.with_suffix('.lrc').exists():
+						shutil.move( fl.with_suffix('.lrc'),newname.with_suffix('.lrc'))
 				except Exception as e:
 					print(f"Couldnt move {fl} to {newname}")
 		pass
+
+	
